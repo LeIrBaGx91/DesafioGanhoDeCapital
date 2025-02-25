@@ -10,7 +10,7 @@ class Program
         while (!string.IsNullOrWhiteSpace(line = Console.ReadLine())) //continuar lendo enquanto não for vazia
         {
             List<Operation> operations = JsonSerializer.Deserialize<List<Operation>>(line); //converter json em c#
-            CapitalGainsCalculator calculator = new CapitalGainsCalculator();
+            CalculadorGanho calculator = new CalculadorGanho();
             List<decimal> taxes = calculator.ProcessOperations(operations);
             List<string> result = new List<string>();
             foreach (var tax in taxes)

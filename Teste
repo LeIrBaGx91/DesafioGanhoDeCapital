@@ -2,25 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-class Program
-{
-    static void Main()
-    {
-        string line;
-        while (!string.IsNullOrWhiteSpace(line = Console.ReadLine())) //continuar lendo enquanto não for vazia
-        {
-            List<Operation> operations = JsonSerializer.Deserialize<List<Operation>>(line); //converter json em c#
-            CalculadorGanho calculator = new CalculadorGanho();
-            List<decimal> taxes = calculator.ProcessOperations(operations);
-            List<string> result = new List<string>();
-            foreach (var tax in taxes)
-            {
-                result.Add($"{{\"tax\": {tax:F2}}}");
-            }
-            Console.WriteLine($"[{string.Join(",", result)}]");
-        }
-    }
-}
 class Operation
 {
     public string OperationType { get; set; }  // "compra" ou "venda"
@@ -86,5 +67,24 @@ class CapitalGainsCalculator
         }
         totalQuantity -= quantity;
         return Math.Round(profit * 0.20m, 2); // 20% de imposto sobre o lucro
+    }
+}
+class Program
+{
+    static void Main()
+    {
+        string line;
+        while (!string.IsNullOrWhiteSpace(line = Console.ReadLine())) //continuar lendo enquanto não for vazia
+        {
+            List<Operation> operations = JsonSerializer.Deserialize<List<Operation>>(line); //converter json em c#
+            CalculadorGanho calculator = new CalculadorGanho();
+            List<decimal> taxes = calculator.ProcessOperations(operations);
+            List<string> result = new List<string>();
+            foreach (var tax in taxes)
+            {
+                result.Add($"{{\"tax\": {tax:F2}}}");
+            }
+            Console.WriteLine($"[{string.Join(",", result)}]");
+        }
     }
 }

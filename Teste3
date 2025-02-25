@@ -1,0 +1,90 @@
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+
+class Program
+{
+    static void Main()
+    {
+        string line;
+        while (!string.IsNullOrWhiteSpace(line = Console.ReadLine())) //continuar lendo enquanto não for vazia
+        {
+            List<Operation> operations = JsonSerializer.Deserialize<List<Operation>>(line); //converter json em c#
+            CapitalGainsCalculator calculator = new CapitalGainsCalculator();
+            List<decimal> taxes = calculator.ProcessOperations(operations);
+            List<string> result = new List<string>();
+            foreach (var tax in taxes)
+            {
+                result.Add($"{{\"tax\": {tax:F2}}}");
+            }
+            Console.WriteLine($"[{string.Join(",", result)}]");
+        }
+    }
+}
+class Operation
+{
+    public string OperationType { get; set; }  // "compra" ou "venda"
+    public decimal UnitCost { get; set; }      // Preço das ações
+    public int Quantity { get; set; }          // Quantidade de ações
+}
+class CapitalGainsCalculator
+{
+    private decimal averagePrice = 0m;    // Preço médio das ações compradas
+    private int totalQuantity = 0;        // Quantidade total de ações
+    private decimal accumulatedLoss = 0m; // Perca acumulado
+    public List<decimal> ProcessOperations(List<Operation> operations)
+    {
+        List<decimal> taxes = new List<decimal>();
+        foreach (var op in operations)
+        {
+            if (op.OperationType == "buy") //compra
+            {
+                Buy(op.Quantity, op.UnitCost);
+                taxes.Add(0m); // não tem imposto
+            }
+            else if (op.OperationType == "sell") //venda 
+            {
+                decimal tax = Sell(op.Quantity, op.UnitCost);
+                taxes.Add(tax); // pode ou não ter imposto
+            }
+        }
+        return taxes;
+    }
+    private void Buy(int quantity, decimal price)
+    {
+        if (totalQuantity == 0)
+        {
+            averagePrice = price;
+        }
+        else
+        {
+            averagePrice = ((totalQuantity * averagePrice) + (quantity * price)) / (totalQuantity + quantity);
+        }
+        totalQuantity += quantity;
+    }
+    private decimal Sell(int quantity, decimal price)
+    {
+        decimal totalSaleValue = quantity * price;
+        decimal totalCost = quantity * averagePrice;
+        decimal profit = totalSaleValue - totalCost;
+        if (totalSaleValue <= 20000) // Se vendeu menos de R$ 20.000
+        {
+            totalQuantity -= quantity;
+            return 0m;  //sem imposto
+        }
+        if (profit < 0) // Acumulador da perca
+        {
+            accumulatedLoss += Math.Abs(profit);
+            totalQuantity -= quantity;
+            return 0m;
+        }
+        if (accumulatedLoss > 0) //calc imposto do lucro
+        {
+            decimal deductedProfit = Math.Max(profit - accumulatedLoss, 0m);
+            accumulatedLoss = Math.Max(accumulatedLoss - profit, 0m);
+            profit = deductedProfit;
+        }
+        totalQuantity -= quantity;
+        return Math.Round(profit * 0.20m, 2); // 20% de imposto sobre o lucro
+    }
+}
